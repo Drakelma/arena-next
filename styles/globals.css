@@ -3,3 +3,37 @@
 @tailwind utilities;
 
 html, body, #__next { height: 100%; }
+
+/* --- Background textures (no assets needed) --- */
+
+/* Subtle noise overlay (data-URI) */
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' opacity='0.08' viewBox='0 0 100 100'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='2' seed='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: cover;
+  pointer-events: none;
+}
+
+/* Dot grid pattern via SVG pattern */
+.bg-dotgrid {
+  background-image:
+    radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: #2f2f2f; /* dot color */
+  opacity: .55;
+}
+
+/* Soft vignette using mask for depth */
+.vignette {
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, rgba(0,0,0,0.7) 65%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, #000 40%, rgba(0,0,0,0.7) 65%, transparent 100%);
+}
+
+/* Tilt utility for Meme/Sticker feels */
+.tilt-1 { transform: rotate(-2deg); }
+.tilt-2 { transform: rotate(2deg); }
+.tilt-3 { transform: rotate(-4deg); }
+
+/* Glow helper */
+.glow {
+  box-shadow: 0 0 0.75rem rgba(255,255,255,0.06), 0 0 2.5rem rgba(59,130,246,0.25);
+}
