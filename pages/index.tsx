@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 
 type Persona = "Rowdy Pub" | "Respectful Analysts" | "Talk Radio";
 type Side = "A" | "B" | null;
@@ -21,6 +21,35 @@ const modPrompts = [
 ];
 function rand<T>(arr: T[]) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+/** Persona-driven brand colors for the “on air” chrome */
+function usePersonaTheme(persona: Persona) {
+  return useMemo(() => {
+    switch (persona) {
+      case "Rowdy Pub":
+        return {
+          a: "#ef4444", // red-500
+          b: "#f97316", // orange-500
+          c: "#22c55e", // green-500
+          accent: "#facc15" // yellow-400
+        };
+      case "Respectful Analysts":
+        return {
+          a: "#22d3ee", // cyan-400
+          b: "#60a5fa", // blue-400
+          c: "#a78bfa", // violet-400
+          accent: "#93c5fd" // blue-300
+        };
+      case "Talk Radio":
+        return {
+          a: "#f43f5e", // rose-500
+          b: "#eab308", // amber-500
+          c: "#06b6d4", // cyan-500
+          accent: "#fde047" // yellow-300
+        };
+    }
+  }, [persona]);
+}
+
 export default function Home() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [i, setI] = useState(0);
@@ -36,6 +65,8 @@ export default function Home() {
   const [verdict, setVerdict] = useState("");
   const [thumbUrl, setThumbUrl] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const theme = usePersonaTheme(persona);
 
   useEffect(() => {
     fetch("/topics.json", { cache: "no-store" })
@@ -87,7 +118,7 @@ export default function Home() {
     setCrowd(f => [`Stat drop by ${joinedSide === "A" ? topic.sides[0] : topic.sides[1]} → ${key}`, ...f].slice(0, 7));
   };
 
-  // Thumbnail generator
+  // ---- Thumbnail generator helpers ----
   function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
     const words = text.split(" ");
     let line = "";
@@ -114,10 +145,10 @@ export default function Home() {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, "#0f172a"); g.addColorStop(1, "#111827");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#ef4444"; ctx.fillRect(40, 40, 130, 42);
+    ctx.fillStyle = theme.a; ctx.fillRect(40, 40, 130, 42);
     ctx.fillStyle = "#000"; ctx.font = "bold 20px system-ui, -apple-system, Segoe UI, Roboto"; ctx.fillText("ON AIR", 78, 67);
     ctx.save(); ctx.translate(W - 280, 60); ctx.rotate(-6 * Math.PI / 180);
-    ctx.fillStyle = "#fde047"; ctx.fillRect(0, 0, 240, 50);
+    ctx.fillStyle = theme.accent; ctx.fillRect(0, 0, 260, 50);
     ctx.fillStyle = "#000"; ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto"; ctx.fillText("YOU’RE THE PUNDIT", 20, 32); ctx.restore();
     ctx.fillStyle = "#fff"; ctx.font = "bold 56px system-ui, -apple-system, Segoe UI, Roboto";
     wrapText(ctx, topic.title.toUpperCase(), 40, 150, W - 80, 62);
@@ -138,164 +169,42 @@ export default function Home() {
     }
     ctx.fillStyle = "#a3a3a3"; ctx.font = "16px system-ui, -apple-system, Segoe UI, Roboto"; ctx.fillText(`Arena · ${persona}`, 40, H - 24);
     const url = canvas.toDataURL("image/png");
-    // store url so user can download/show
-    setThumbUrl(url);
-    canvasRef.current = canvas;
+    setThumbUrl(url); canvasRef.current = canvas;
   };
   const downloadThumb = () => {
     if (!thumbUrl) return;
     const a = document.createElement("a");
-    a.href = thumbUrl;
-    a.download = `arena-thumb-${Date.now()}.png`;
-    a.click();
+    a.href = thumbUrl; a.download = `arena-thumb-${Date.now()}.png`; a.click();
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <div className="bg-gradient-to-r from-fuchsia-600/30 via-emerald-500/20 to-sky-500/30 border-b border-neutral-800">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="px-2 py-1 rounded-md bg-red-500 text-black text-xs font-extrabold uppercase tracking-wider">On Air</div>
-            <div className="font-black text-lg">Deep Sports Debate Arena</div>
-            <div className="text-xs bg-neutral-800 px-2 py-1 rounded-md border border-neutral-700">Quick-Fire</div>
-          </div>
-          <div className="text-xs text-neutral-300">“You on the mic. Internet watching.”</div>
-        </div>
-      </div>
+    <div className="relative min-h-screen bg-neutral-950 text-neutral-100 overflow-hidden">
+      {/* --- LAYERED BACKGROUND (meme/YouTube vibe) --- */}
+      {/* Dot grid */}
+      <div className="pointer-events-none absolute inset-0 bg-dotgrid vignette" />
+      {/* Gradient blobs that change with persona */}
+      <div
+        className="pointer-events-none absolute -top-24 -left-24 w-[60vw] h-[60vw] rounded-full blur-3xl opacity-30"
+        style={{ background: `radial-gradient(circle at 30% 30%, ${theme.a}, transparent 60%)` }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 -right-24 w-[55vw] h-[55vw] rounded-full blur-3xl opacity-25"
+        style={{ background: `radial-gradient(circle at 70% 70%, ${theme.b}, transparent 60%)` }}
+      />
+      <div
+        className="pointer-events-none absolute top-1/3 -right-24 w-[40vw] h-[40vw] rounded-full blur-[100px] opacity-20"
+        style={{ background: `radial-gradient(circle at 50% 50%, ${theme.c}, transparent 60%)` }}
+      />
+      {/* Noise film */}
+      <div className="pointer-events-none absolute inset-0 bg-noise" />
 
-      <main className="max-w-6xl mx-auto p-4 md:p-8 grid gap-6">
-        <div className="rounded-3xl bg-neutral-900 border border-neutral-800 shadow-2xl overflow-hidden">
-          <div className="p-4 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <div className="text-neutral-400 text-xs uppercase tracking-wide">Topic</div>
-              <div className="text-2xl font-extrabold leading-snug">{topic ? topic.title : "Loading topics…"}</div>
-              <div className="mt-2 flex items-center gap-2">
-                <select className="bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-sm" value={i} onChange={(e) => { setI(parseInt(e.target.value, 10)); setThumbUrl(""); }}>
-                  {topics.map((t, idx) => (<option key={idx} value={idx}>{t.title}</option>))}
-                </select>
-                <select className="bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-sm" value={persona} onChange={(e) => setPersona(e.target.value as Persona)}>
-                  <option>Rowdy Pub</option>
-                  <option>Respectful Analysts</option>
-                  <option>Talk Radio</option>
-                </select>
-              </div>
-            </div>
+      {/* --- HEADER: “On Air” + Ticker + Stickers --- */}
+      <header className="sticky top-0 z-20">
+        <div className="backdrop-blur-md bg-neutral-900/60 border-b border-neutral-800">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-yellow-300 text-black px-3 py-2 text-xs font-black uppercase tracking-wider rotate-[-2deg] shadow">You’re the Pundit</div>
-              <button className={`px-4 py-2 rounded-xl font-semibold ${joinedSide ? "bg-emerald-400 text-black" : "bg-neutral-800 text-neutral-400 cursor-not-allowed"}`} disabled={!joinedSide} onClick={start}>
-                Start Debate
-              </button>
-              {round > 0 && round < 99 && (
-                <div className="flex items-center gap-2">
-                  <div className="px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 font-mono">{t}s</div>
-                  <button className="px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700" onClick={endRound}>End Round</button>
-                  <select className="bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-sm" value={len} onChange={e => setLen(parseInt(e.target.value, 10))}>
-                    <option value={30}>30s</option>
-                    <option value={45}>45s</option>
-                    <option value={60}>60s</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4 p-4 md:p-6 pt-0">
-            <div className="rounded-2xl bg-neutral-950 border border-neutral-800 p-4">
-              <div className="text-xs text-neutral-400">Side A</div>
-              <div className="text-lg font-bold">{topic?.sides?.[0] || "—"}</div>
-              <button onClick={() => { setJoinedSide("A"); setThumbUrl(""); }} className={`mt-2 px-3 py-2 rounded-lg border ${joinedSide === "A" ? "bg-green-600/80 border-green-500" : "border-neutral-700 hover:bg-neutral-800"}`}>
-                {joinedSide === "A" ? "Joined" : "Join Side A"}
-              </button>
-            </div>
-            <div className="rounded-2xl bg-neutral-950 border border-neutral-800 p-4">
-              <div className="text-xs text-neutral-400">Side B</div>
-              <div className="text-lg font-bold">{topic?.sides?.[1] || "—"}</div>
-              <button onClick={() => { setJoinedSide("B"); setThumbUrl(""); }} className={`mt-2 px-3 py-2 rounded-lg border ${joinedSide === "B" ? "bg-blue-600/80 border-blue-500" : "border-neutral-700 hover:bg-neutral-800"}`}>
-                {joinedSide === "B" ? "Joined" : "Join Side B"}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4 p-4 md:p-6 pt-0">
-            <div className="md:col-span-2 rounded-2xl bg-neutral-950 border border-neutral-800 p-4">
-              <div className="text-xs uppercase tracking-wide text-neutral-400">Preloaded Facts</div>
-              <ul className="mt-2 grid md:grid-cols-2 gap-2">
-                {topic?.facts?.map((s, idx) => (
-                  <li key={`f-${idx}`} className="flex items-center justify-between gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-                    <div>
-                      <div className="text-sm">{s.label}</div>
-                      <div className="text-neutral-400 text-xs">{String(s.value)}</div>
-                    </div>
-                    <button className="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-sm" onClick={() => drop(s)}>
-                      Stat Drop
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 text-xs uppercase tracking-wide text-neutral-400">Derived Ratings</div>
-              <ul className="mt-2 grid md:grid-cols-2 gap-2">
-                {topic?.derived?.map((s, idx) => (
-                  <li key={`d-${idx}`} className="flex items-center justify-between gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-                    <div>
-                      <div className="text-sm">{s.label}</div>
-                      <div className="text-neutral-400 text-xs">{String(s.value)}</div>
-                    </div>
-                    <button className="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-sm" onClick={() => drop(s)}>
-                      Stat Drop
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl bg-neutral-950 border border-neutral-800 p-4 space-y-4">
-              <div>
-                <div className="text-xs uppercase tracking-wide text-neutral-400">AI Moderator</div>
-                <div className="mt-2 grid gap-2 max-h-44 overflow-auto pr-1">
-                  {mod.length === 0 ? <div className="text-neutral-500 text-sm">Waiting for debate…</div> :
-                    mod.map((m, idx) => <div key={idx} className="text-sm bg-neutral-900 border border-neutral-800 rounded-lg p-2">{m}</div>)}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-wide text-neutral-400">AI Crowd · {persona}</div>
-                <div className="mt-2 grid gap-2 max-h-44 overflow-auto pr-1">
-                  {crowd.length === 0 ? <div className="text-neutral-500 text-sm">The stands will roar when the debate starts…</div> :
-                    crowd.map((m, idx) => <div key={idx} className="text-sm bg-neutral-900 border border-neutral-800 rounded-lg p-2">{m}</div>)}
-                </div>
-              </div>
-
-              {round === 99 && (
-                <div className="space-y-3">
-                  <div className="rounded-xl bg-neutral-900 border border-neutral-700 p-3">
-                    <div className="text-xs uppercase tracking-wide text-neutral-400">Verdict</div>
-                    <div className="mt-1 text-base font-semibold">{verdict}</div>
-                  </div>
-
-                  <div className="rounded-xl bg-neutral-900 border border-neutral-700 p-3">
-                    <div className="text-xs uppercase tracking-wide text-neutral-400">Thumbnail Mode</div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <button onClick={makeThumbnail} className="px-3 py-2 rounded-lg bg-emerald-400 text-black font-semibold">
-                        Generate thumbnail
-                      </button>
-                      <button onClick={downloadThumb} disabled={!thumbUrl} className={`px-3 py-2 rounded-lg ${thumbUrl ? "bg-neutral-800 hover:bg-neutral-700" : "bg-neutral-800/50 text-neutral-500 cursor-not-allowed"}`}>
-                        Download PNG
-                      </button>
-                    </div>
-                    {thumbUrl && (
-                      <div className="mt-3">
-                        <img src={thumbUrl} alt="arena thumbnail" className="w-full rounded-lg border border-neutral-800" />
-                      </div>
-                    )}
-                    <canvas ref={canvasRef} width={1280} height={720} style={{ display: "none" }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center text-neutral-500 text-xs">v0.3 • Next.js + Tailwind • Thumbnail Mode</div>
-      </main>
-    </div>
-  );
-}
+              <div
+                className="px-2 py-1 rounded-md text-black text-xs font-extrabold uppercase tracking-wider glow"
+                style={{ background: theme.a }}
+              >
+                Live
