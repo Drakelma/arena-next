@@ -1,0 +1,36 @@
+[
+  {
+    "title": "Who won the 2025 Premier League transfer window?",
+    "sides": ["Manchester United", "Chelsea"],
+    "facts": [
+      { "label": "United spend", "value": "€165m" },
+      { "label": "Chelsea spend", "value": "€210m" },
+      { "label": "United players in", "value": 4 },
+      { "label": "Chelsea players in", "value": 6 },
+      { "label": "United net spend (approx)", "value": "€120m" },
+      { "label": "Chelsea net spend (approx)", "value": "€160m" }
+    ],
+    "derived": [
+      { "label": "Avg age signings (Utd)", "value": 24.2 },
+      { "label": "Avg age signings (Che)", "value": 22.6 },
+      { "label": "Projected minutes added (Utd)", "value": 6500 },
+      { "label": "Projected minutes added (Che)", "value": 8100 },
+      { "label": "Tactical fit score (Utd)", "value": 74 },
+      { "label": "Tactical fit score (Che)", "value": 69 }
+    ]
+  },
+  {
+    "title": "Should Rashford be dropped from the starting XI?",
+    "sides": ["Drop him", "Start him"],
+    "facts": [
+      { "label": "Goals this season", "value": 7 },
+      { "label": "Assists", "value": 5 },
+      { "label": "Shot conversion %", "value": 9.3 },
+      { "label": "Pressures per 90", "value": 11.8 }
+    ],
+    "derived": [
+      { "label": "Form (last 5)", "value": "6.8/10" },
+      { "label": "Fixture difficulty (next 3)", "value": "Hard" }
+    ]
+  }
+]
